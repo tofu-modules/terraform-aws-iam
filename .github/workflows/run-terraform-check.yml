@@ -1,0 +1,39 @@
+name: Run Terraform check
+
+on:
+  - push
+
+permissions:
+  contents: write
+
+jobs:
+  terraform-check:
+    name: Run Terraform check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Show version
+        run: terraform -version
+
+      - name: Run check modules
+        run: |
+          cd modules
+          for f in * ; do
+            if [ -d "$f" ] ; then
+              cd $f
+              terraform init -upgrade -no-color
+              terraform fmt -check -no-color
+              terraform validate -no-color
+              cd ..
+            fi
+          done
+
+      - name: Commit changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: Run Terraform check

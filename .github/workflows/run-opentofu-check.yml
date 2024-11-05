@@ -1,0 +1,39 @@
+name: Run OpenTofu check
+
+on:
+  - push
+
+permissions:
+  contents: write
+
+jobs:
+  opentofu-check:
+    name: Run OpenTofu check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup OpenTofu
+        uses: opentofu/setup-opentofu@v1
+
+      - name: Show version
+        run: tofu -version
+
+      - name: Run check modules
+        run: |
+          cd modules
+          for f in * ; do
+            if [ -d "$f" ] ; then
+              cd $f
+              tofu init -upgrade -no-color
+              tofu fmt -check -no-color
+              tofu validate -no-color
+              cd ..
+            fi
+          done
+
+      - name: Commit changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: Run OpenTofu check
